@@ -21,3 +21,8 @@ div.open-task {
 
 div.done-task {
 }
+
+
+.actions {
+  text-align: right;
+}

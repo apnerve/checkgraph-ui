@@ -492,14 +492,14 @@ body{
 #items .del:hover {
     background:#ccc;
 }
-#new form {
+#new form, .new form {
     background:#eeeeee;
     border-radius:4px;
     display:block;
     padding:3px 0;
     height:30px;
 }
-#new input[type="submit"] {
+#new input[type="submit"], .new input[type="submit"] {
     float:left;
     margin:3px 3px;
     padding:0;
@@ -512,10 +512,10 @@ body{
     border-radius:2px;
     cursor:pointer;
 }
-#new input[type="submit"]:hover {
+#new input[type="submit"]:hover, .new input[type="submit"]:hover {
     color:#fff;
 }
-#new input[type="text"] {
+#new input[type="text"], .new input[type="text"] {
     border:0;
     padding:0 10px;
     margin:0;
@@ -527,9 +527,10 @@ body{
     width:235px;
     height:30px;
 }
-#new input[type="text"] {
+#new input[type="text"], .new input[type="text"] {
     outline:none;
 }​
+
 
 
 /* =============================================================================
