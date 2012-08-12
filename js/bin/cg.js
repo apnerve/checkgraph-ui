@@ -2,7 +2,7 @@
 var CheckGraph;
 
 CheckGraph = (function() {
-  var addConnectionOnServer, addNewTask, graphId, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCount, title, urls;
+  var addConnectionOnServer, addNewTask, graphId, handleClass, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCleanup, tasksCount, title, urls;
 
   urls = {
     addChild: function(parentId, childId) {
@@ -42,6 +42,9 @@ CheckGraph = (function() {
             drawer(parentId, childId);
           }
           console.log("success");
+          tasksCleanup();
+          populateLevels();
+          handleGraphics(true);
         } else {
           errorHandle(response);
         }
@@ -52,6 +55,21 @@ CheckGraph = (function() {
         return errorHandle(response);
       }
     });
+  };
+
+  tasksCleanup = function() {
+    var cleanup, id, task, _i, _len, _results;
+    cleanup = function(taskId) {
+      tasks[taskId].DOMItem = null;
+      tasks[taskId].Raphael = null;
+      return tasks[taskId].isOpen = null;
+    };
+    _results = [];
+    for (task = _i = 0, _len = tasks.length; _i < _len; task = ++_i) {
+      id = tasks[task];
+      _results.push(cleanup(id));
+    }
+    return _results;
   };
 
   addNewTask = function(connectedTo, isChild) {
@@ -66,13 +84,21 @@ CheckGraph = (function() {
         tasks[response.task.id] = response.task;
         if (connectedTo != null) {
           if (isChild) {
+            tasks[connectedTo].children.push({
+              id: response.task.id
+            });
             addConnectionOnServer(connectedTo, response.task.id);
           } else {
+            console.log("Here");
+            tasks[response.task.id].children.push({
+              id: connectedTo
+            });
             addConnectionOnServer(response.task.id, connectedTo);
           }
         }
         console.log(tasks.valueOf());
         tasksCount += 1;
+        tasksCleanup();
         populateLevels();
         return handleGraphics();
       }).error(function(response) {
@@ -84,6 +110,30 @@ CheckGraph = (function() {
     return $("#myModal").reveal();
   };
 
+  handleClass = function(obj, isDone, isOpen) {
+    var h;
+    h = function(add, remove) {
+      var cls, _i, _j, _len, _len1, _results;
+      for (_i = 0, _len = add.length; _i < _len; _i++) {
+        cls = add[_i];
+        obj.addClass(cls);
+      }
+      _results = [];
+      for (_j = 0, _len1 = remove.length; _j < _len1; _j++) {
+        cls = remove[_j];
+        _results.push(obj.removeClass(cls));
+      }
+      return _results;
+    };
+    if (isDone) {
+      return h(["done-task", "blue"], ["open-task", "red", "yellow"]);
+    } else if (isOpen) {
+      return h(["open-task", "red"], ["done-task", "blue", "yellow"]);
+    } else {
+      return h(["yellow"], ["open-task", "done-task", "blue", "red"]);
+    }
+  };
+
   markTaskAs = function(taskId, newStatus) {
     var checkIfOpen, markTaskAsDone, oldStatus;
     checkIfOpen = function(taskId) {
@@ -91,19 +141,18 @@ CheckGraph = (function() {
       isOpen = true;
       shouldMarkFalse = function(parentId, parent) {
         var child, isParent, markParent, _i, _len, _ref;
+        isParent = false;
         markParent = function(childId) {
-          var isParent;
-          if (childId === taskId) {
+          if (String(childId) === String(taskId)) {
             return isParent = true;
           }
         };
-        isParent = false;
         _ref = parent.children;
         for (_i = 0, _len = _ref.length; _i < _len; _i++) {
           child = _ref[_i];
           markParent(child.id);
         }
-        if (isParent && parent.status !== "DONE") {
+        if (isParent && tasks[parentId].status !== "DONE") {
           return isOpen = false;
         }
       };
@@ -113,9 +162,7 @@ CheckGraph = (function() {
       }
       if (isOpen && !tasks[taskId].isOpen) {
         tasks[taskId].isOpen = true;
-        tasks[taskId].DOMItem.addClass("open-task");
-        tasks[taskId].DOMItem.addClass("red");
-        return tasks[taskId].DOMItem.removeClass("yellow");
+        return handleClass(tasks[taskId].DOMItem, false, true);
       }
     };
     markTaskAsDone = function() {
@@ -126,10 +173,7 @@ CheckGraph = (function() {
           var child, _i, _len, _ref, _results;
           console.log("Marked Done");
           tasks[taskId].status = "DONE";
-          tasks[taskId].DOMItem.addClass("done-task");
-          tasks[taskId].DOMItem.addClass("blue");
-          tasks[taskId].DOMItem.removeClass("open-task");
-          tasks[taskId].DOMItem.removeClass("red");
+          handleClass(tasks[taskId].DOMItem, true, true);
           _ref = tasks[taskId].children;
           _results = [];
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -259,11 +303,13 @@ CheckGraph = (function() {
     return true;
   };
 
-  handleGraphics = function() {
+  handleGraphics = function(cleanup) {
     var addChildConnection, canvasWidth, connectionClickHandle, connectionClickStatus, connectionDrawer, dataContainer, drawLevel, height, id, level, paper, task, width, xOffSet, xSpace, yOffSet, ySpace, yTextOffSet, _i, _len, _results;
     canvasWidth = levels.length * 470;
-    $("#background-canvas").empty();
-    $("#foreground-data").empty();
+    if ((cleanup != null) && cleanup === true) {
+      $("#background-canvas").empty();
+      $("#foreground-data").empty();
+    }
     paper = Raphael("background-canvas", "" + canvasWidth + "px", "100%");
     height = 105;
     width = 335;
@@ -319,16 +365,7 @@ CheckGraph = (function() {
         item = $("<div></div>").addClass("todo-app");
         item.append($("<div class='maintask'>" + tasks[taskId].name + "</div>"));
         tasks[taskId].DOMItem = item;
-        if (tasks[taskId].isOpen) {
-          item.addClass("open-task");
-          item.addClass("red");
-        } else {
-          item.addClass("yellow");
-        }
-        if (tasks[taskId].status === "DONE") {
-          item.addClass("done-task");
-          item.addClass("blue");
-        }
+        handleClass(item, tasks[taskId].status === "DONE", tasks[taskId].isOpen);
         doneLink = function() {
           var con, doneButton;
           con = $("<div></div>").addClass("actions");

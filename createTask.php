@@ -1,6 +1,6 @@
 <?php
 $content_for_layout = json_encode(array("status" => 200,
-	"task"=> array("id" => 23, "name" => "Wizards of Oz", "children" => array())
+	"task"=> array("id" => 21, "name" => "Wizards of Oz", "children" => array(), "status" => "NOT_DONE")
 ));
 
 header("Pragma: no-cache");

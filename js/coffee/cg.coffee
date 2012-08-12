@@ -26,6 +26,9 @@ class CheckGraph
 					if drawer?
 						drawer(parentId, childId)
 					console.log "success"
+					tasksCleanup()
+					populateLevels()
+					handleGraphics(true)
 				else
 					errorHandle(response)
 				console.log response
@@ -36,6 +39,12 @@ class CheckGraph
 			})
 
 	# Add a new task
+	tasksCleanup = () ->
+		cleanup = (taskId) ->
+			tasks[taskId].DOMItem = null
+			tasks[taskId].Raphael = null
+			tasks[taskId].isOpen = null
+		cleanup id for id, task in tasks
 	addNewTask = (connectedTo, isChild) ->
 		$("#myModal h1").html("Add a new Task")
 		$("#myModal input[type=submit]").off()
@@ -47,11 +56,15 @@ class CheckGraph
 				tasks[response.task.id] = response.task
 				if connectedTo?
 					if isChild
+						tasks[connectedTo].children.push {id:response.task.id}
 						addConnectionOnServer connectedTo, response.task.id
 					else
+						console.log "Here"
+						tasks[response.task.id].children.push {id:connectedTo}
 						addConnectionOnServer response.task.id, connectedTo
 				console.log tasks.valueOf()
 				tasksCount += 1
+				tasksCleanup()
 				populateLevels()
 				handleGraphics()
 			).error((response) ->
@@ -61,24 +74,32 @@ class CheckGraph
 			)
 		)	
 		$("#myModal").reveal()
+	handleClass = (obj, isDone, isOpen) ->
+		h = (add, remove) ->
+			obj.addClass cls for cls in add
+			obj.removeClass cls for cls in remove
+		if isDone
+			h ["done-task", "blue"], ["open-task", "red", "yellow"]
+		else if isOpen
+			h ["open-task", "red"], ["done-task", "blue", "yellow"]
+		else
+			h ["yellow"], ["open-task", "done-task", "blue", "red"]
 	# Marks Task As
 	markTaskAs = (taskId, newStatus) ->
 		checkIfOpen = (taskId) ->
 			isOpen = true
 			shouldMarkFalse = (parentId, parent) ->
-				markParent = (childId) ->
-					if childId == taskId
-						isParent = true
 				isParent = false
+				markParent = (childId) ->
+					if String(childId) == String(taskId)
+						isParent = true
 				markParent child.id for child in parent.children
-				if isParent and parent.status != "DONE"
+				if isParent and tasks[parentId].status != "DONE"
 					isOpen = false
 			shouldMarkFalse id, task for id, task of tasks
 			if isOpen and !tasks[taskId].isOpen
 				tasks[taskId].isOpen = true
-				tasks[taskId].DOMItem.addClass "open-task"
-				tasks[taskId].DOMItem.addClass "red"
-				tasks[taskId].DOMItem.removeClass "yellow"
+				handleClass(tasks[taskId].DOMItem, false, true)
 
 		markTaskAsDone = () ->
 			$.ajax({
@@ -87,10 +108,7 @@ class CheckGraph
 				success: (response) ->
 					console.log "Marked Done"
 					tasks[taskId].status = "DONE"
-					tasks[taskId].DOMItem.addClass "done-task"
-					tasks[taskId].DOMItem.addClass "blue"
-					tasks[taskId].DOMItem.removeClass "open-task"
-					tasks[taskId].DOMItem.removeClass "red"
+					handleClass(tasks[taskId].DOMItem, true, true)
 					checkIfOpen child.id for child in tasks[taskId].children
 				error: (response) ->
 					console.log "Unable to Mark Done"
@@ -158,10 +176,11 @@ class CheckGraph
 				return false
 			remarkTasks()
 		return true
-	handleGraphics = () ->
+	handleGraphics = (cleanup) ->
 		canvasWidth = levels.length * 470
-		$("#background-canvas").empty()
-		$("#foreground-data").empty()
+		if cleanup? and cleanup == true
+			$("#background-canvas").empty()
+			$("#foreground-data").empty()
 		paper = Raphael("background-canvas", "#{canvasWidth}px", "100%")
 		height = 105
 		width = 335
@@ -216,14 +235,7 @@ class CheckGraph
 				item = $("<div></div>").addClass("todo-app")
 				item.append $("<div class='maintask'>#{tasks[taskId].name}</div>")
 				tasks[taskId].DOMItem = item
-				if tasks[taskId].isOpen
-					item.addClass "open-task"
-					item.addClass "red"
-				else
-					item.addClass "yellow"
-				if tasks[taskId].status == "DONE"
-					item.addClass "done-task"
-					item.addClass "blue"
+				handleClass(item, tasks[taskId].status == "DONE", tasks[taskId].isOpen)
 				doneLink = () ->
 					con = $("<div></div>").addClass "actions"
 					doneButton = () ->
