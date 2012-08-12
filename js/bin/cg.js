@@ -2,7 +2,7 @@
 var CheckGraph;
 
 CheckGraph = (function() {
-  var graphId, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCount, title, urls;
+  var addConnectionOnServer, addNewTask, graphId, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCount, title, urls;
 
   urls = {
     addChild: function(parentId, childId) {
@@ -10,6 +10,9 @@ CheckGraph = (function() {
     },
     changeStatus: function(taskId, status) {
       return "changeStatus.php?&graph_id=" + graphId + "&task_id=" + taskId + "&status=" + status;
+    },
+    createTask: function(name) {
+      return ("createTask.php?graph_id=" + graphId + "&name=") + encodeURIComponent(name);
     }
   };
 
@@ -22,6 +25,64 @@ CheckGraph = (function() {
   tasksCount = 0;
 
   levels = [];
+
+  addConnectionOnServer = function(parentId, childId, drawer) {
+    var errorHandle;
+    errorHandle = function(response) {
+      console.log("Error");
+      console.log(response);
+      return tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1);
+    };
+    return $.ajax({
+      url: urls.addChild(parentId, childId),
+      method: 'get',
+      success: function(response) {
+        if (response.status === 200 || true) {
+          if (drawer != null) {
+            drawer(parentId, childId);
+          }
+          console.log("success");
+        } else {
+          errorHandle(response);
+        }
+        return console.log(response);
+      },
+      complete: $(".ButtonSelected").removeClass("ButtonSelected"),
+      error: function(response) {
+        return errorHandle(response);
+      }
+    });
+  };
+
+  addNewTask = function(connectedTo, isChild) {
+    $("#myModal h1").html("Add a new Task");
+    $("#myModal input[type=submit]").off();
+    $("#myModal input[type=submit]").click(function(event) {
+      var name, url;
+      event.preventDefault();
+      name = $("#myModal input[type=text]").val();
+      url = urls.createTask(name);
+      return $.get(url).success(function(response) {
+        tasks[response.task.id] = response.task;
+        if (connectedTo != null) {
+          if (isChild) {
+            addConnectionOnServer(connectedTo, response.task.id);
+          } else {
+            addConnectionOnServer(response.task.id, connectedTo);
+          }
+        }
+        console.log(tasks.valueOf());
+        tasksCount += 1;
+        populateLevels();
+        return handleGraphics();
+      }).error(function(response) {
+        return console.log("Unable to create Task");
+      }).complete(function() {
+        return $("#myModal").trigger('reveal:close');
+      });
+    });
+    return $("#myModal").reveal();
+  };
 
   markTaskAs = function(taskId, newStatus) {
     var checkIfOpen, markTaskAsDone, oldStatus;
@@ -199,50 +260,28 @@ CheckGraph = (function() {
   };
 
   handleGraphics = function() {
-    var addChildConnection, addConnectionOnServer, canvasWidth, connectionClickHandle, connectionClickStatus, dataContainer, drawLevel, height, id, level, paper, task, width, xOffSet, xSpace, yOffSet, ySpace, yTextOffSet, _i, _len, _results;
+    var addChildConnection, canvasWidth, connectionClickHandle, connectionClickStatus, connectionDrawer, dataContainer, drawLevel, height, id, level, paper, task, width, xOffSet, xSpace, yOffSet, ySpace, yTextOffSet, _i, _len, _results;
     canvasWidth = levels.length * 470;
     $("#background-canvas").empty();
     $("#foreground-data").empty();
     paper = Raphael("background-canvas", "" + canvasWidth + "px", "100%");
-    height = 80;
-    width = 340;
-    xSpace = 130;
-    ySpace = 30;
-    xOffSet = 60;
-    yOffSet = ySpace;
+    height = 105;
+    width = 335;
+    xSpace = 135;
+    ySpace = 33;
+    xOffSet = 65;
+    yOffSet = ySpace + 2;
     yTextOffSet = 30;
     dataContainer = $("#foreground-data");
+    connectionDrawer = function(parent, child) {
+      return paper.connection(tasks[parent].Raphael.rObj, tasks[child].Raphael.rObj, 2, "#400");
+    };
     connectionClickStatus = {
       active: false,
       taskId: null,
       type: null
     };
-    addConnectionOnServer = function(parentId, childId) {
-      var errorHandle;
-      errorHandle = function(response) {
-        console.log("Error");
-        console.log(response);
-        return tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1);
-      };
-      return $.ajax({
-        url: urls.addChild(parentId, childId),
-        method: 'get',
-        success: function(response) {
-          if (response.status === 200 || true) {
-            paper.connection(tasks[parentId].Raphael.rObj, tasks[childId].Raphael.rObj, 2, "#400");
-            console.log("success");
-          } else {
-            errorHandle(response);
-          }
-          return console.log(response);
-        },
-        complete: $(".ButtonSelected").removeClass("ButtonSelected"),
-        error: function(response) {
-          return errorHandle(response);
-        }
-      });
-    };
-    connectionClickHandle = function(taskId, type) {
+    connectionClickHandle = function(taskId, type, drawer) {
       var childId, newChildRef, parentId;
       if (!connectionClickStatus.active) {
         connectionClickStatus.active = true;
@@ -261,7 +300,7 @@ CheckGraph = (function() {
           };
           tasks[parentId].children.push(newChildRef);
           if (populateLevels()) {
-            addConnectionOnServer(parentId, childId);
+            addConnectionOnServer(parentId, childId, connectionDrawer);
           } else {
             tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1);
             $(".ButtonSelected").removeClass("ButtonSelected");
@@ -278,7 +317,7 @@ CheckGraph = (function() {
       drawTask = function(taskId) {
         var doneLink, item, leftLinks, rightLinks;
         item = $("<div></div>").addClass("todo-app");
-        item.append($("<div class='maintask'>" + tasks[taskId].title + "</div>"));
+        item.append($("<div class='maintask'>" + tasks[taskId].name + "</div>"));
         tasks[taskId].DOMItem = item;
         if (tasks[taskId].isOpen) {
           item.addClass("open-task");
@@ -316,7 +355,12 @@ CheckGraph = (function() {
             return ele;
           };
           rightButton = function() {
-            return $('<input type="submit" value="+" />');
+            var ele;
+            ele = $('<input type="submit" value="+" />');
+            ele.click(function() {
+              return addNewTask(taskId, true);
+            });
+            return ele;
           };
           con.append(rightArrow());
           con.append(rightButton());
@@ -334,7 +378,12 @@ CheckGraph = (function() {
             return ele;
           };
           leftButton = function() {
-            return $('<input type="submit" value="+" />');
+            var ele;
+            ele = $('<input type="submit" value="+" />');
+            ele.click(function() {
+              return addNewTask(taskId, false);
+            });
+            return ele;
           };
           con = $("<div class='addLinks leftlink'></div>");
           con.append(leftArrow());

@@ -4,12 +4,63 @@ class CheckGraph
 			return "addChild.html?&graph_id=#{graphId}&parent_id=#{parentId}&child_id#{childId}"
 		changeStatus : (taskId, status) ->
 			return "changeStatus.php?&graph_id=#{graphId}&task_id=#{taskId}&status=#{status}"
+		createTask : (name) ->
+			return "createTask.php?graph_id=#{graphId}&name=" + encodeURIComponent(name);
 	graphId = null
 	title = null
 	tasks = {}
 	tasksCount = 0
 	levels = []
 
+	addConnectionOnServer = (parentId, childId, drawer) ->
+		errorHandle = (response) ->
+				console.log "Error"
+				console.log response
+				tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1)
+		$.ajax({
+			url: urls.addChild(parentId, childId)
+			# type: 'json'
+			method: 'get'
+			success: (response) ->
+				if response.status == 200 or true
+					if drawer?
+						drawer(parentId, childId)
+					console.log "success"
+				else
+					errorHandle(response)
+				console.log response
+			complete:
+				$(".ButtonSelected").removeClass("ButtonSelected")
+			error: (response) ->
+				errorHandle(response)
+			})
+
+	# Add a new task
+	addNewTask = (connectedTo, isChild) ->
+		$("#myModal h1").html("Add a new Task")
+		$("#myModal input[type=submit]").off()
+		$("#myModal input[type=submit]").click((event)->
+			event.preventDefault()
+			name = $("#myModal input[type=text]").val()
+			url = urls.createTask(name)
+			$.get(url).success((response) ->
+				tasks[response.task.id] = response.task
+				if connectedTo?
+					if isChild
+						addConnectionOnServer connectedTo, response.task.id
+					else
+						addConnectionOnServer response.task.id, connectedTo
+				console.log tasks.valueOf()
+				tasksCount += 1
+				populateLevels()
+				handleGraphics()
+			).error((response) ->
+				console.log "Unable to create Task"
+			).complete(() ->
+				$("#myModal").trigger('reveal:close')
+			)
+		)	
+		$("#myModal").reveal()
 	# Marks Task As
 	markTaskAs = (taskId, newStatus) ->
 		checkIfOpen = (taskId) ->
@@ -112,41 +163,22 @@ class CheckGraph
 		$("#background-canvas").empty()
 		$("#foreground-data").empty()
 		paper = Raphael("background-canvas", "#{canvasWidth}px", "100%")
-		height = 80
-		width = 340
-		xSpace = 130
-		ySpace = 30
-		xOffSet = 60
-		yOffSet = ySpace
+		height = 105
+		width = 335
+		xSpace = 135
+		ySpace = 33
+		xOffSet = 65
+		yOffSet = ySpace + 2
 		yTextOffSet = 30
 		dataContainer = $("#foreground-data")
 
+		connectionDrawer = (parent, child) ->
+			paper.connection tasks[parent].Raphael.rObj, tasks[child].Raphael.rObj, 2, "#400"
 		connectionClickStatus = 
 			active: false
 			taskId: null
 			type: null
-		addConnectionOnServer = (parentId, childId) ->
-			errorHandle = (response) ->
-					console.log "Error"
-					console.log response
-					tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1)
-			$.ajax({
-				url: urls.addChild(parentId, childId)
-				# type: 'json'
-				method: 'get'
-				success: (response) ->
-					if response.status == 200 or true
-						paper.connection tasks[parentId].Raphael.rObj, tasks[childId].Raphael.rObj, 2, "#400"
-						console.log "success"
-					else
-						errorHandle(response)
-					console.log response
-				complete:
-					$(".ButtonSelected").removeClass("ButtonSelected")
-				error: (response) ->
-					errorHandle(response)
-				})
-		connectionClickHandle = (taskId, type) ->
+		connectionClickHandle = (taskId, type, drawer) ->
 			if !connectionClickStatus.active
 				connectionClickStatus.active = true
 				connectionClickStatus.taskId = taskId
@@ -168,7 +200,7 @@ class CheckGraph
 
 					if populateLevels()
 						# Ooh Awesome! Hit Server and see if everything is fine.
-						addConnectionOnServer(parentId, childId)
+						addConnectionOnServer(parentId, childId, connectionDrawer)
 					else
 						# Remove connection
 						tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1)
@@ -182,7 +214,7 @@ class CheckGraph
 			dataContainer.append column
 			drawTask = (taskId) ->
 				item = $("<div></div>").addClass("todo-app")
-				item.append $("<div class='maintask'>#{tasks[taskId].title}</div>")
+				item.append $("<div class='maintask'>#{tasks[taskId].name}</div>")
 				tasks[taskId].DOMItem = item
 				if tasks[taskId].isOpen
 					item.addClass "open-task"
@@ -201,6 +233,7 @@ class CheckGraph
 						)
 					con.append doneButton()
 					return con
+				
 				rightLinks = () ->
 					con = $("<div class='addLinks'></div>")
 					rightArrow = () ->
@@ -211,7 +244,11 @@ class CheckGraph
 						)
 						return ele
 					rightButton = () ->
-						$('<input type="submit" value="+" />')
+						ele = $('<input type="submit" value="+" />')
+						ele.click(->
+							addNewTask taskId, true
+						)
+						return ele
 					con.append rightArrow()
 					con.append rightButton()
 					return con
@@ -224,7 +261,11 @@ class CheckGraph
 						)
 						return ele
 					leftButton = () ->
-						$('<input type="submit" value="+" />')
+						ele = $('<input type="submit" value="+" />')
+						ele.click(->
+							addNewTask taskId, false
+						)
+						return ele
 					con = $("<div class='addLinks leftlink'></div>")
 					con.append leftArrow()
 					con.append leftButton()
@@ -241,6 +282,7 @@ class CheckGraph
 		addChildConnection = (id, task) ->
 			addConnection = (obj1, obj2) ->
 				paper.connection obj1, obj2, 2, "#400"
+
 			addConnection task.Raphael.rObj, tasks[child.id].Raphael.rObj for child in task.children
 		# paper.setViewBox 0, 0, xOffSet, yOffSet, true
 		drawLevel level for level in levels

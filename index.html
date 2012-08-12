@@ -58,14 +58,11 @@
 	<div id="foreground-data" class="list-graph-wrap"></div>
 </div>
 
-
-
-
 <div id="myModal" class="reveal-modal">
 	<h1>Create new CheckGraph</h1>
     <div class="new">
                 <form>
-                    <input type="text" placeholder="Add new something here...">
+                    <input type="text" placeholder="Title of the item">
                     <input type="submit" value="+">
                 </form>
             </div>
@@ -87,7 +84,7 @@
 		title: "Asd",
 		tasks: [{
 				id: 1,
-				title: "Task 1",
+				name: "Task 1",
                 status: "NOT_DONE",
 				children: [{id: 2},
 					{id: 3},
@@ -95,17 +92,17 @@
 			},
 			{
 				id: 2,
-				title: "Task 2",
+				name: "Task 2",
                 status: "NOT_DONE",
 				children: []
 			}, {
 				id: 3,
-				title: "Task 3",
+				name: "Task 3",
                 status: "NOT_DONE",
 				children: [{id: 4}]
 			}, {
 				id: 4,
-				title: "Task 4",
+				name: "Task 4",
                 status: "NOT_DONE",
 				children: []
 			}
