@@ -54,19 +54,18 @@ class CheckGraph
 			url = urls.createTask(name)
 			$.get(url).success((response) ->
 				tasks[response.task.id] = response.task
+				console.log "Here"
 				if connectedTo?
 					if isChild
 						tasks[connectedTo].children.push {id:response.task.id}
 						addConnectionOnServer connectedTo, response.task.id
 					else
-						console.log "Here"
 						tasks[response.task.id].children.push {id:connectedTo}
 						addConnectionOnServer response.task.id, connectedTo
-				console.log tasks.valueOf()
 				tasksCount += 1
 				tasksCleanup()
 				populateLevels()
-				handleGraphics()
+				handleGraphics(true)
 			).error((response) ->
 				console.log "Unable to create Task"
 			).complete(() ->
@@ -177,10 +176,11 @@ class CheckGraph
 			remarkTasks()
 		return true
 	handleGraphics = (cleanup) ->
-		canvasWidth = levels.length * 470
 		if cleanup? and cleanup == true
 			$("#background-canvas").empty()
 			$("#foreground-data").empty()
+		canvasWidth = levels.length * 470
+		addFloatingPlus()
 		paper = Raphael("background-canvas", "#{canvasWidth}px", "100%")
 		height = 105
 		width = 335
@@ -304,8 +304,13 @@ class CheckGraph
 		window.onload = -> 
 			handleGraphics()
 		# Find the roots.
-	isAcyclic = () ->
-
+	addFloatingPlus = () ->
+		plus = $("<div>+</div>")
+		plus.addClass("FloatingPlus")
+		plus.click(->
+			addNewTask()
+		)
+		$("#foreground-data").prepend plus
 	constructor : (graphObj) ->
 		title = graphObj.title
 		initTasksObj(graphObj.tasks)

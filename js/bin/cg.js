@@ -2,7 +2,7 @@
 var CheckGraph;
 
 CheckGraph = (function() {
-  var addConnectionOnServer, addNewTask, graphId, handleClass, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCleanup, tasksCount, title, urls;
+  var addConnectionOnServer, addFloatingPlus, addNewTask, graphId, handleClass, handleGraphics, initGraph, initTasksObj, levels, markTaskAs, populateLevels, tasks, tasksCleanup, tasksCount, title, urls;
 
   urls = {
     addChild: function(parentId, childId) {
@@ -82,6 +82,7 @@ CheckGraph = (function() {
       url = urls.createTask(name);
       return $.get(url).success(function(response) {
         tasks[response.task.id] = response.task;
+        console.log("Here");
         if (connectedTo != null) {
           if (isChild) {
             tasks[connectedTo].children.push({
@@ -89,18 +90,16 @@ CheckGraph = (function() {
             });
             addConnectionOnServer(connectedTo, response.task.id);
           } else {
-            console.log("Here");
             tasks[response.task.id].children.push({
               id: connectedTo
             });
             addConnectionOnServer(response.task.id, connectedTo);
           }
         }
-        console.log(tasks.valueOf());
         tasksCount += 1;
         tasksCleanup();
         populateLevels();
-        return handleGraphics();
+        return handleGraphics(true);
       }).error(function(response) {
         return console.log("Unable to create Task");
       }).complete(function() {
@@ -305,11 +304,12 @@ CheckGraph = (function() {
 
   handleGraphics = function(cleanup) {
     var addChildConnection, canvasWidth, connectionClickHandle, connectionClickStatus, connectionDrawer, dataContainer, drawLevel, height, id, level, paper, task, width, xOffSet, xSpace, yOffSet, ySpace, yTextOffSet, _i, _len, _results;
-    canvasWidth = levels.length * 470;
     if ((cleanup != null) && cleanup === true) {
       $("#background-canvas").empty();
       $("#foreground-data").empty();
     }
+    canvasWidth = levels.length * 470;
+    addFloatingPlus();
     paper = Raphael("background-canvas", "" + canvasWidth + "px", "100%");
     height = 105;
     width = 335;
@@ -474,7 +474,15 @@ CheckGraph = (function() {
     };
   };
 
-  isAcyclic = function() {};
+  addFloatingPlus = function() {
+    var plus;
+    plus = $("<div>+</div>");
+    plus.addClass("FloatingPlus");
+    plus.click(function() {
+      return addNewTask();
+    });
+    return $("#foreground-data").prepend(plus);
+  };
 
   function CheckGraph(graphObj) {
     title = graphObj.title;

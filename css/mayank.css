@@ -26,3 +26,20 @@ div.done-task {
 .actions {
   text-align: right;
 }
+
+div.FloatingPlus {
+	width: 30px;
+	height: 30px;
+	font-size: 24px;
+	padding: 4px 3px 3px;
+	background: white;
+	color: #DDD;
+	box-shadow: 0px 0px 2px rgba(0,0,0, 0.1);
+	display: inline;
+	position: absolute;
+	top: 0;
+	left: 0;
+	margin: 40px 0px 0px 50px;
+	float: left;
+	cursor: pointer;
+}
