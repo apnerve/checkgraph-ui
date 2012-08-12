@@ -17,9 +17,7 @@ input[type=submit].ButtonSelected {
 	color: red;
 }
 div.open-task {
-	color: 1px solid blue;
 }
 
 div.done-task {
-	border: 1px solid green;
 }

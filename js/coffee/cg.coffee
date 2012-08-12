@@ -12,7 +12,40 @@ class CheckGraph
 
 	# Marks Task As
 	markTaskAs = (taskId, newStatus) ->
+		checkIfOpen = (taskId) ->
+			isOpen = true
+			shouldMarkFalse = (parentId, parent) ->
+				markParent = (childId) ->
+					if childId == taskId
+						isParent = true
+				isParent = false
+				markParent child.id for child in parent.children
+				if isParent and parent.status != "DONE"
+					isOpen = false
+			shouldMarkFalse id, task for id, task of tasks
+			if isOpen and !tasks[taskId].isOpen
+				tasks[taskId].isOpen = true
+				tasks[taskId].DOMItem.addClass "open-task"
+				tasks[taskId].DOMItem.addClass "red"
+				tasks[taskId].DOMItem.removeClass "yellow"
+
 		markTaskAsDone = () ->
+			$.ajax({
+				url: urls.changeStatus(taskId, "DONE")
+				method: "GET"
+				success: (response) ->
+					console.log "Marked Done"
+					tasks[taskId].status = "DONE"
+					tasks[taskId].DOMItem.addClass "done-task"
+					tasks[taskId].DOMItem.addClass "blue"
+					tasks[taskId].DOMItem.removeClass "open-task"
+					tasks[taskId].DOMItem.removeClass "red"
+					checkIfOpen child.id for child in tasks[taskId].children
+				error: (response) ->
+					console.log "Unable to Mark Done"
+				complete: (response) ->
+					console.log "Completed"
+			})
 		oldStatus = tasks[taskId].status
 		if oldStatus != newStatus
 			if oldStatus == "NOT_DONE" and tasks[taskId].isOpen and newStatus == "DONE"
@@ -76,6 +109,8 @@ class CheckGraph
 		return true
 	handleGraphics = () ->
 		canvasWidth = levels.length * 470
+		$("#background-canvas").empty()
+		$("#foreground-data").empty()
 		paper = Raphael("background-canvas", "#{canvasWidth}px", "100%")
 		height = 80
 		width = 340
@@ -132,15 +167,11 @@ class CheckGraph
 					tasks[parentId].children.push newChildRef
 
 					if populateLevels()
-						console.log "Working"
 						# Ooh Awesome! Hit Server and see if everything is fine.
 						addConnectionOnServer(parentId, childId)
 					else
 						# Remove connection
-						console.log "Randi"
 						tasks[parentId].children = tasks[parentId].children.slice(0, tasks[parentId].children.length - 1)
-						console.log "Popped from "
-						console.log tasks[parentId].children
 						$(".ButtonSelected").removeClass("ButtonSelected")
 				connectionClickStatus.active = false
 
@@ -150,12 +181,17 @@ class CheckGraph
 			column = $("<div></div>").addClass("takswrap")
 			dataContainer.append column
 			drawTask = (taskId) ->
-				item = $("<div></div>").addClass("todo-app").addClass("red")
+				item = $("<div></div>").addClass("todo-app")
 				item.append $("<div class='maintask'>#{tasks[taskId].title}</div>")
+				tasks[taskId].DOMItem = item
 				if tasks[taskId].isOpen
 					item.addClass "open-task"
-				if tasks[taskId].status
+					item.addClass "red"
+				else
+					item.addClass "yellow"
+				if tasks[taskId].status == "DONE"
 					item.addClass "done-task"
+					item.addClass "blue"
 				doneLink = () ->
 					con = $("<div></div>").addClass "actions"
 					doneButton = () ->
