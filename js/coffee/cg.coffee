@@ -2,11 +2,22 @@ class CheckGraph
 	urls = 
 		addChild : (parentId, childId) ->
 			return "addChild.html?&graph_id=#{graphId}&parent_id=#{parentId}&child_id#{childId}"
+		changeStatus : (taskId, status) ->
+			return "changeStatus.php?&graph_id=#{graphId}&task_id=#{taskId}&status=#{status}"
 	graphId = null
 	title = null
 	tasks = {}
 	tasksCount = 0
 	levels = []
+
+	# Marks Task As
+	markTaskAs = (taskId, newStatus) ->
+		markTaskAsDone = () ->
+		oldStatus = tasks[taskId].status
+		if oldStatus != newStatus
+			if oldStatus == "NOT_DONE" and tasks[taskId].isOpen and newStatus == "DONE"
+				markTaskAsDone()
+
 	# Creates a id indexed task object.
 	initTasksObj = (taskList) ->
 		tasksCount = taskList.length
@@ -27,10 +38,14 @@ class CheckGraph
 					taskStatus[task_id] = if isParent then "Parent" else "Child"
 				else if taskStatus[task_id] == "Parent" and isParent == false
 					taskStatus[task_id] = "Child"
+			lockTask = (task_id) ->
+				tasks[task_id].isOpen = false
 			if taskStatus[id] == "Leveled"
 				return
 			markAs id, true
 			markAs child.id, false for child in task.children
+			if task.status == "NOT_DONE"
+				lockTask child.id for child in task.children
 		remarkTasks = () ->
 			remark = (id) ->
 				if taskStatus[id] != "Leveled" 
@@ -49,6 +64,7 @@ class CheckGraph
 
 		initTask = (id) ->
 			isLeveled[id] = false
+			tasks[id].isOpen = true
 		initTask id for id, task of tasks
 		while leveledCount < tasksCount
 			markUsingTask id, task for id, task of tasks
@@ -136,6 +152,19 @@ class CheckGraph
 			drawTask = (taskId) ->
 				item = $("<div></div>").addClass("todo-app").addClass("red")
 				item.append $("<div class='maintask'>#{tasks[taskId].title}</div>")
+				if tasks[taskId].isOpen
+					item.addClass "open-task"
+				if tasks[taskId].status
+					item.addClass "done-task"
+				doneLink = () ->
+					con = $("<div></div>").addClass "actions"
+					doneButton = () ->
+						but = $("<input type='submit' value='Done'>");
+						but.click(->
+							markTaskAs taskId, "DONE"
+						)
+					con.append doneButton()
+					return con
 				rightLinks = () ->
 					con = $("<div class='addLinks'></div>")
 					rightArrow = () ->
@@ -163,6 +192,7 @@ class CheckGraph
 					con = $("<div class='addLinks leftlink'></div>")
 					con.append leftArrow()
 					con.append leftButton()
+				item.append doneLink()
 				item.append rightLinks()
 				item.append leftLinks()
 				tasks[taskId].Raphael =

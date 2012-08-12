@@ -2,11 +2,14 @@
 var CheckGraph;
 
 CheckGraph = (function() {
-  var graphId, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, populateLevels, tasks, tasksCount, title, urls;
+  var graphId, handleGraphics, initGraph, initTasksObj, isAcyclic, levels, markTaskAs, populateLevels, tasks, tasksCount, title, urls;
 
   urls = {
     addChild: function(parentId, childId) {
       return "addChild.html?&graph_id=" + graphId + "&parent_id=" + parentId + "&child_id" + childId;
+    },
+    changeStatus: function(taskId, status) {
+      return "changeStatus.php?&graph_id=" + graphId + "&task_id=" + taskId + "&status=" + status;
     }
   };
 
@@ -19,6 +22,17 @@ CheckGraph = (function() {
   tasksCount = 0;
 
   levels = [];
+
+  markTaskAs = function(taskId, newStatus) {
+    var markTaskAsDone, oldStatus;
+    markTaskAsDone = function() {};
+    oldStatus = tasks[taskId].status;
+    if (oldStatus !== newStatus) {
+      if (oldStatus === "NOT_DONE" && tasks[taskId].isOpen && newStatus === "DONE") {
+        return markTaskAsDone();
+      }
+    }
+  };
 
   initTasksObj = function(taskList) {
     var addTask, task, _i, _len, _results;
@@ -41,7 +55,7 @@ CheckGraph = (function() {
     levels = [];
     leveledCount = 0;
     markUsingTask = function(id, task) {
-      var child, markAs, _i, _len, _ref, _results;
+      var child, lockTask, markAs, _i, _j, _len, _len1, _ref, _ref1, _results;
       markAs = function(task_id, isParent) {
         if (!(taskStatus[task_id] != null)) {
           return taskStatus[task_id] = isParent ? "Parent" : "Child";
@@ -49,17 +63,27 @@ CheckGraph = (function() {
           return taskStatus[task_id] = "Child";
         }
       };
+      lockTask = function(task_id) {
+        return tasks[task_id].isOpen = false;
+      };
       if (taskStatus[id] === "Leveled") {
         return;
       }
       markAs(id, true);
       _ref = task.children;
-      _results = [];
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         child = _ref[_i];
-        _results.push(markAs(child.id, false));
+        markAs(child.id, false);
       }
-      return _results;
+      if (task.status === "NOT_DONE") {
+        _ref1 = task.children;
+        _results = [];
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          child = _ref1[_j];
+          _results.push(lockTask(child.id));
+        }
+        return _results;
+      }
     };
     remarkTasks = function() {
       var id, remark, task, _results;
@@ -93,7 +117,8 @@ CheckGraph = (function() {
       return thisLevel.length;
     };
     initTask = function(id) {
-      return isLeveled[id] = false;
+      isLeveled[id] = false;
+      return tasks[id].isOpen = true;
     };
     for (id in tasks) {
       task = tasks[id];
@@ -194,9 +219,28 @@ CheckGraph = (function() {
       column = $("<div></div>").addClass("takswrap");
       dataContainer.append(column);
       drawTask = function(taskId) {
-        var item, leftLinks, rightLinks;
+        var doneLink, item, leftLinks, rightLinks;
         item = $("<div></div>").addClass("todo-app").addClass("red");
         item.append($("<div class='maintask'>" + tasks[taskId].title + "</div>"));
+        if (tasks[taskId].isOpen) {
+          item.addClass("open-task");
+        }
+        if (tasks[taskId].status) {
+          item.addClass("done-task");
+        }
+        doneLink = function() {
+          var con, doneButton;
+          con = $("<div></div>").addClass("actions");
+          doneButton = function() {
+            var but;
+            but = $("<input type='submit' value='Done'>");
+            return but.click(function() {
+              return markTaskAs(taskId, "DONE");
+            });
+          };
+          con.append(doneButton());
+          return con;
+        };
         rightLinks = function() {
           var con, rightArrow, rightButton;
           con = $("<div class='addLinks'></div>");
@@ -234,6 +278,7 @@ CheckGraph = (function() {
           con.append(leftArrow());
           return con.append(leftButton());
         };
+        item.append(doneLink());
         item.append(rightLinks());
         item.append(leftLinks());
         tasks[taskId].Raphael = {

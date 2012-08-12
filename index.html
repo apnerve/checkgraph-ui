@@ -12,6 +12,7 @@
 
 	<link rel="stylesheet" href="css/style.css">
 	<link rel="stylesheet" href="css/reveal.css">
+	<link rel="stylesheet" type="text/css" href="css/mayank.css">
 	<script src="js/libs/modernizr-2.0.6.min.js"></script>
 </head>
 <body>
@@ -35,7 +36,27 @@
 	</div>	
 </div>
 
+<!-- Templates -->
+<script type="text/x-template" id="task-template">
+			<div class="maintask">
+				{title}
+			</div>
+            <!-- ADD BUTTONS ON LEFT AND RIGHT  -->
+            <div class="addLinks">
+            	<input type="submit" value="+" />
+            	<input type="submit" value=">" />
+            </div>
+             <div class="addLinks leftlink" >
+            	<input type="submit" value="+" />
+            	<input type="submit" value="<" />
+            </div>
+</script>
 
+
+<div class="list">
+	<div id="background-canvas"></div>
+	<div id="foreground-data" class="list-graph-wrap"></div>
+</div>
 <div class="list-graph-wrap">
 	
 
@@ -56,12 +77,7 @@
                     <input type="text" placeholder="Add new something here..." />
                 </form>
             </div>
-
-
-          
-            
     </div>​
-
     <!-- END OF A TODO-APP CARD -->
 
 
@@ -90,10 +106,8 @@
 
              <div class="addLinks leftlink" >
             	<input type="submit" value="+" />
-            </div>
-            
+            </div>            
     </div>​
-
     <!-- END OF A TODO-APP CARD -->
 
 
@@ -121,13 +135,9 @@
 
              <div class="addLinks leftlink" >
             	<input type="submit" value="+" />
-            </div>
-            
+            </div>  
     </div>​
-
     <!-- END OF A TODO-APP CARD -->
-
-
 
 	<div class="todo-app yellow">
 
@@ -152,14 +162,10 @@
 
              <div class="addLinks leftlink" >
             	<input type="submit" value="+" />
-            </div>
-            
+            </div>            
     </div>​
 
     <!-- END OF A TODO-APP CARD -->
-
-
-
   </div>
   <!-- END OF LISTWRAP -->
 
@@ -558,155 +564,57 @@
   <!-- END OF LISTWRAP -->
 
 
-
-
-<div class="takswrap">
-		
-	
-	<div class="todo-app blue">
-
-			<!-- THE MAIN TASK COMES HERE -->
-			<div class="maintask">
-				This is my first task list for checkgraph in Yahoo open hack !
-			</div>
-
-            <div id="new">
-                <form>
-                    <input type="submit" value="+" />
-                    <input type="text" placeholder="Add new something here..." />
-                </form>
-            </div>
-
-
-            <!-- ADD BUTTONS ON LEFT AND RIGHT  -->
-            <div class="addLinks">
-            	<input type="submit" value="+" />
-            </div>
-
-
-             <div class="addLinks leftlink" >
-            	<input type="submit" value="+" />
-            </div>
-            
-    </div>​
-
-    <!-- END OF A TODO-APP CARD -->
-
-
-
-	<div class="todo-app red ">
-
-			<!-- THE MAIN TASK COMES HERE -->
-			<div class="maintask">
-				This is my first task list for checkgraph in Yahoo open hack !
-			</div>
-
-            <div id="new">
-                <form>
-                    <input type="submit" value="+" />
-                    <input type="text" placeholder="Add new something here..." />
-                </form>
-            </div>
-
-
-            <!-- ADD BUTTONS ON LEFT AND RIGHT  -->
-            <div class="addLinks">
-            	<input type="submit" value="+" />
-            </div>
-
-
-             <div class="addLinks leftlink" >
-            	<input type="submit" value="+" />
-            </div>
-            
-    </div>​
-
-    <!-- END OF A TODO-APP CARD -->
-
-
-
-	<div class="todo-app yellow">
-
-			<!-- THE MAIN TASK COMES HERE -->
-			<div class="maintask">
-				This is my first task list for checkgraph in Yahoo open hack !
-			</div>
-
-            <div id="new">
-                <form>
-                    <input type="submit" value="+" />
-                    <input type="text" placeholder="Add new something here..." />
-                </form>
-            </div>
-
-
-            <!-- ADD BUTTONS ON LEFT AND RIGHT  -->
-            <div class="addLinks">
-            	<input type="submit" value="+" />
-            </div>
-
-
-             <div class="addLinks leftlink" >
-            	<input type="submit" value="+" />
-            </div>
-            
-    </div>​
-
-    <!-- END OF A TODO-APP CARD -->
-
-
-
-	<div class="todo-app green">
-
-			<!-- THE MAIN TASK COMES HERE -->
-			<div class="maintask">
-				This is my first task list for checkgraph in Yahoo open hack !
-			</div>
-
-            <div id="new">
-                <form>
-                    <input type="submit" value="+" />
-                    <input type="text" placeholder="Add new something here..." />
-                </form>
-            </div>
-
-
-            <!-- ADD BUTTONS ON LEFT AND RIGHT  -->
-            <div class="addLinks">
-            	<input type="submit" value="+" />
-            </div>
-
-
-             <div class="addLinks leftlink" >
-            	<input type="submit" value="+" />
-            </div>
-            
-    </div>​
-
-    <!-- END OF A TODO-APP CARD -->
-
-  </div>
-  <!-- END OF LISTWRAP -->
-
-
 </div>
 
 
 
 
 <div id="myModal" class="reveal-modal">
-		<h1>Reveal Modal Goodness</h1>
-		<p>This is a default modal in all its glory, but any of the styles here can easily be changed in the CSS.</p>
-		<a class="close-reveal-modal">&#215;</a>
-	</div>
+	<h1>Reveal Modal Goodness</h1>
+	<p>This is a default modal in all its glory, but any of the styles here can easily be changed in the CSS.</p>
+	<a class="close-reveal-modal">&#215;</a>
+</div>
 	
 	
-<script src="//ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script>
+<!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.js"></script> -->
 <script>window.jQuery || document.write('<script src="js/libs/jquery-1.7.1.js"><\/script>')</script>
 
-<script src="js/jquery.reveal.js" type="text/javascript">
-</script>
+<script src="js/jquery.reveal.js" type="text/javascript"></script>
+<script src="js/libs/raphael-min.js"></script>
+<script type="text/javascript" src="js/libs/graffle/graffle.js"></script>
+<script src="js/bin/cg.js"></script>
 
+<script type="text/javascript">
+    // Check Graph Class
+    var checkGraph = new CheckGraph({
+		title: "Asd",
+		tasks: [{
+				id: 1,
+				title: "Task 1",
+                status: "NOT_DONE",
+				children: [{id: 2},
+					{id: 3},
+				]
+			},
+			{
+				id: 2,
+				title: "Task 2",
+                status: "NOT_DONE",
+				children: []
+			}, {
+				id: 3,
+				title: "Task 3",
+                status: "NOT_DONE",
+				children: [{id: 4}]
+			}, {
+				id: 4,
+				title: "Task 4",
+                status: "NOT_DONE",
+				children: []
+			}
+		]
+	});
+</script>
 
 <script>
 $(document).ready(function() {
@@ -715,16 +623,6 @@ $(document).ready(function() {
 	  $('#myModal').reveal();
      });
 });
-
-
-
-
-
-
-
-</script>
-
-<script>
 $(document).ready(function() {
     $('.check').click(function(){
         $(this).children('span').toggle();
@@ -741,7 +639,6 @@ $(document).ready(function() {
         $(this).parents('li').slideUp();
     });
 });​
-
 </script>
 </body>
 </html>
