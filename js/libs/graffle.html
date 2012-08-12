@@ -1,0 +1,62 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html lang="en"><head>
+        <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+        <title>Raphaël · Graffle</title>
+        <link rel="stylesheet" href="graffle_files/demo.css" type="text/css" media="screen">
+        <link rel="stylesheet" href="graffle_files/demo-print.css" type="text/css" media="print">
+        <script src="graffle_files/raphael.js" type="text/javascript" charset="utf-8"></script>
+        <script src="graffle_files/graffle.js" type="text/javascript" charset="utf-8"></script>
+        <style type="text/css" media="screen">
+            #holder {
+                -moz-border-radius: 10px;
+                -webkit-border-radius: 10px;
+                border: solid 1px #333;
+            }
+            p {
+                text-align: center;
+            }
+        </style>
+    </head>
+    <body>
+        <p>Drag shapes around.</p>
+        <div id="holder"><svg style="overflow: hidden; position: relative; top: -0.5px;" xmlns="http://www.w3.org/2000/svg" width="640" version="1.1" height="480"><desc>Created with Raphaël 2.1.0</desc><defs></defs><ellipse stroke-width="2" fill-opacity="0" style="fill-opacity: 0; cursor: move;" stroke="#bf0000" fill="#bf0000" ry="20" rx="30" cy="100" cx="190"></ellipse><rect stroke-width="2" fill-opacity="0" style="fill-opacity: 0; cursor: move;" stroke="#bf5600" fill="#bf5600" ry="10" rx="10" r="10" height="40" width="60" y="80" x="290"></rect><rect stroke-width="2" fill-opacity="0" style="fill-opacity: 0; cursor: move;" stroke="#bfac00" fill="#bfac00" ry="2" rx="2" r="2" height="40" width="60" y="180" x="290"></rect><ellipse stroke-width="2" fill-opacity="0" style="fill-opacity: 0; cursor: move;" stroke="#7cbf00" fill="#7cbf00" ry="20" rx="20" cy="100" cx="450"></ellipse><path d="M221.045,100C255.022,100,255.022,100,289,100" stroke="#ffffff" fill="none" style=""></path><path stroke-width="5" d="M320,121C320,150,320,150,320,179" stroke="#ffffff" fill="none" style=""></path><path d="M320,121C320,150,320,150,320,179" stroke="#ffffff" fill="none" style=""></path><path stroke-width="3" d="M351,100C389.985,100,389.985,100,428.97,100" stroke="#ffffff" fill="none" style=""></path><path d="M351,100C389.985,100,389.985,100,428.97,100" stroke="#000000" fill="none" style=""></path></svg></div>
+        <p id="copy">Demo of <a href="http://raphaeljs.com/">Raphaël</a>—JavaScript Vector Library</p>
+    
+        <script type="text/javascript">
+var el;
+window.onload = function () {
+    var dragger = function () {
+        this.ox = this.type == "rect" ? this.attr("x") : this.attr("cx");
+        this.oy = this.type == "rect" ? this.attr("y") : this.attr("cy");
+        this.animate({"fill-opacity": .2}, 500);
+    },
+        move = function (dx, dy) {
+            var att = this.type == "rect" ? {x: this.ox + dx, y: this.oy + dy} : {cx: this.ox + dx, cy: this.oy + dy};
+            this.attr(att);
+            for (var i = connections.length; i--;) {
+                r.connection(connections[i]);
+            }
+            r.safari();
+        },
+        up = function () {
+            this.animate({"fill-opacity": 0}, 500);
+        },
+        r = Raphael("holder", 640, 480),
+        connections = [],
+        shapes = [  r.ellipse(190, 100, 30, 20),
+                    r.rect(290, 80, 60, 40, 10),
+                    r.rect(290, 180, 60, 40, 2),
+                    r.ellipse(450, 100, 20, 20)
+                ];
+    for (var i = 0, ii = shapes.length; i < ii; i++) {
+        var color = Raphael.getColor();
+        shapes[i].attr({fill: color, stroke: color, "fill-opacity": 0, "stroke-width": 2, cursor: "move"});
+        shapes[i].drag(move, dragger, up);
+    }
+    connections.push(r.connection(shapes[0], shapes[1], "#fff"));
+    connections.push(r.connection(shapes[1], shapes[2], "#fff", "#fff|5"));
+    connections.push(r.connection(shapes[1], shapes[3], "#000", "#fff"));
+};
+
+        </script>
+</body></html>
